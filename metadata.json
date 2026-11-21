@@ -1,0 +1,6 @@
+{
+  "name": "RedPen",
+  "description": "Client-side Indian ATS resume audit, recruiter critique, bullet rewriter, and cold-DM kit with zero AI API cost.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

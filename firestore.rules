@@ -1,0 +1,251 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'kartikgunjal08@gmail.com';
+    }
+
+    function isValidCreatorProfile(data) {
+      return data.keys().hasAll([
+        'creatorId',
+        'email',
+        'displayName',
+        'siteCredits',
+        'publishedCount',
+        'hasUnlimitedPass',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'creatorId',
+        'email',
+        'displayName',
+        'siteCredits',
+        'publishedCount',
+        'hasUnlimitedPass',
+        'lastUtrRef',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.creatorId == request.auth.uid
+      && isValidId(data.creatorId)
+      && data.email is string && data.email.size() <= 200
+      && data.displayName is string && data.displayName.size() <= 100
+      && data.siteCredits is int && data.siteCredits >= 0 && data.siteCredits <= 10000
+      && data.publishedCount is int && data.publishedCount >= 0 && data.publishedCount <= 100000
+      && data.hasUnlimitedPass is bool
+      && (!('lastUtrRef' in data) || (data.lastUtrRef is string && data.lastUtrRef.size() >= 6 && data.lastUtrRef.size() <= 40))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidGift(data, slug) {
+      return data.keys().hasAll([
+        'slug',
+        'creatorId',
+        'tier',
+        'theme',
+        'occasion',
+        'recipientName',
+        'senderName',
+        'headline',
+        'openingLetter',
+        'specialDate',
+        'milestoneDateIso',
+        'milestoneLabel',
+        'songTitle',
+        'songArtist',
+        'songUrl',
+        'memories',
+        'reasons',
+        'openWhenNotes',
+        'enableQuiz',
+        'quiz',
+        'scratchLabel',
+        'scratchSecret',
+        'passcodeEnabled',
+        'passcode',
+        'passcodeHint',
+        'customSlug',
+        'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'slug',
+        'creatorId',
+        'tier',
+        'theme',
+        'occasion',
+        'recipientName',
+        'senderName',
+        'headline',
+        'openingLetter',
+        'specialDate',
+        'milestoneDateIso',
+        'milestoneLabel',
+        'songTitle',
+        'songArtist',
+        'songUrl',
+        'memories',
+        'reasons',
+        'openWhenNotes',
+        'enableQuiz',
+        'quiz',
+        'scratchLabel',
+        'scratchSecret',
+        'passcodeEnabled',
+        'passcode',
+        'passcodeHint',
+        'customSlug',
+        'createdAt'
+      ])
+      && data.slug == slug
+      && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 64
+      && data.slug.matches('^[a-zA-Z0-9_\\-]+$')
+      && data.creatorId == request.auth.uid
+      && isValidId(data.creatorId)
+      && data.tier in ['free', 'single9', 'unlimited99']
+      && data.theme in ['wax-letter', 'midnight-polaroid', 'cobalt-zine', 'blush-atelier']
+      && data.occasion in ['birthday', 'anniversary', 'bestie', 'apology']
+      && data.recipientName is string && data.recipientName.size() <= 80
+      && data.senderName is string && data.senderName.size() <= 80
+      && data.headline is string && data.headline.size() <= 200
+      && data.openingLetter is string && data.openingLetter.size() <= 2000
+      && data.specialDate is string && data.specialDate.size() <= 60
+      && data.milestoneDateIso is string && data.milestoneDateIso.size() <= 32
+      && data.milestoneLabel is string && data.milestoneLabel.size() <= 120
+      && data.songTitle is string && data.songTitle.size() <= 120
+      && data.songArtist is string && data.songArtist.size() <= 120
+      && data.songUrl is string && data.songUrl.size() <= 400
+      && data.memories is list && data.memories.size() <= 8
+      && (data.memories.size() == 0 || data.memories[0] is map)
+      && data.reasons is list && data.reasons.size() <= 5
+      && (data.reasons.size() == 0 || data.reasons[0] is string)
+      && data.openWhenNotes is list && data.openWhenNotes.size() <= 4
+      && (data.openWhenNotes.size() == 0 || data.openWhenNotes[0] is map)
+      && data.enableQuiz is bool
+      && data.quiz is list && data.quiz.size() <= 3
+      && (data.quiz.size() == 0 || data.quiz[0] is map)
+      && data.scratchLabel is string && data.scratchLabel.size() <= 140
+      && data.scratchSecret is string && data.scratchSecret.size() <= 600
+      && data.passcodeEnabled is bool
+      && data.passcode is string && data.passcode.size() <= 16
+      && data.passcodeHint is string && data.passcodeHint.size() <= 140
+      && data.customSlug is string && data.customSlug.size() <= 64
+      && data.createdAt is timestamp;
+    }
+
+    match /creators/{creatorId} {
+      allow get: if isValidId(creatorId) && (isOwner(creatorId) || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isValidId(creatorId)
+        && isOwner(creatorId)
+        && isValidCreatorProfile(incoming())
+        && incoming().siteCredits == 1
+        && incoming().publishedCount == 0
+        && incoming().hasUnlimitedPass == false
+        && !('lastUtrRef' in incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(creatorId)
+        && isOwner(creatorId)
+        && isValidCreatorProfile(incoming())
+        && incoming().creatorId == existing().creatorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Buy ₹9 single-site credit
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['siteCredits', 'lastUtrRef', 'updatedAt'])
+            && incoming().siteCredits == existing().siteCredits + 1
+            && 'lastUtrRef' in incoming()
+            && incoming().lastUtrRef.size() >= 6
+          )
+          ||
+          // Action 2: Unlock ₹99 infinite websites pass
+          (
+            existing().hasUnlimitedPass == false
+            && incoming().diff(existing()).affectedKeys().hasOnly(['hasUnlimitedPass', 'lastUtrRef', 'updatedAt'])
+            && incoming().hasUnlimitedPass == true
+            && 'lastUtrRef' in incoming()
+            && incoming().lastUtrRef.size() >= 6
+          )
+          ||
+          // Action 3: Atomic publish consumption paired with /gifts/{slug} create
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['publishedCount', 'siteCredits', 'updatedAt'])
+            && incoming().publishedCount == existing().publishedCount + 1
+            && (
+              (existing().hasUnlimitedPass == true && incoming().siteCredits == existing().siteCredits)
+              ||
+              (existing().hasUnlimitedPass == false && existing().siteCredits >= 1 && incoming().siteCredits == existing().siteCredits - 1)
+            )
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    match /gifts/{slug} {
+      allow get: if isValidId(slug);
+      allow list: if isAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
+
+      allow create: if isValidId(slug)
+        && isSignedIn()
+        && isValidGift(incoming(), slug)
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/creators/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/creators/$(request.auth.uid)).data.publishedCount
+           == get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.publishedCount + 1
+        && (
+          (
+            get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.hasUnlimitedPass == true
+            && incoming().tier == 'unlimited99'
+          )
+          ||
+          (
+            get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.hasUnlimitedPass == false
+            && get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.siteCredits >= 1
+            && getAfter(/databases/$(database)/documents/creators/$(request.auth.uid)).data.siteCredits
+               == get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.siteCredits - 1
+            && (
+              (get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.publishedCount == 0 && incoming().tier == 'free')
+              ||
+              (get(/databases/$(database)/documents/creators/$(request.auth.uid)).data.publishedCount >= 1 && incoming().tier == 'single9')
+            )
+          )
+        );
+
+      allow update: if false;
+      allow delete: if isValidId(slug) && isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+  }
+}

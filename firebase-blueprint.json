@@ -1,0 +1,233 @@
+{
+  "entities": {
+    "CreatorProfile": {
+      "title": "CreatorProfile",
+      "description": "Authenticated creator account tracking free tier credit, ₹9 single-site credits, ₹99 unlimited pass status, and published count.",
+      "type": "object",
+      "properties": {
+        "creatorId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the creator.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified Google account email of the creator.",
+          "maxLength": 200
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name from Google Sign-In.",
+          "maxLength": 100
+        },
+        "siteCredits": {
+          "type": "integer",
+          "description": "Remaining publish credits (starts at 1 free credit, +1 per ₹9 purchase)."
+        },
+        "publishedCount": {
+          "type": "integer",
+          "description": "Total number of surprise websites published by this creator."
+        },
+        "hasUnlimitedPass": {
+          "type": "boolean",
+          "description": "Whether the creator has unlocked the ₹99 infinite websites pass."
+        },
+        "lastUtrRef": {
+          "type": "string",
+          "description": "Latest UPI reference / UTR submitted for ₹9 or ₹99 unlock.",
+          "minLength": 6,
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the creator profile was initialized."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the creator profile was last modified."
+        }
+      },
+      "required": [
+        "creatorId",
+        "email",
+        "displayName",
+        "siteCredits",
+        "publishedCount",
+        "hasUnlimitedPass",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SurpriseGift": {
+      "title": "SurpriseGift",
+      "description": "Interactive surprise mini-website published by a creator and viewable publicly via its slug.",
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Unique URL-safe slug identifier.",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the creator who published this gift.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["free", "single9", "unlimited99"],
+          "description": "Plan tier under which this gift was published."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["wax-letter", "midnight-polaroid", "cobalt-zine", "blush-atelier"],
+          "description": "Selected visual theme."
+        },
+        "occasion": {
+          "type": "string",
+          "enum": ["birthday", "anniversary", "bestie", "apology"],
+          "description": "Selected occasion preset."
+        },
+        "recipientName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "senderName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "openingLetter": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "specialDate": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "milestoneDateIso": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "milestoneLabel": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "songTitle": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "songArtist": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "songUrl": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "memories": {
+          "type": "array",
+          "description": "Up to 8 Polaroid memory cards with compressed image data URIs."
+        },
+        "reasons": {
+          "type": "array",
+          "description": "Up to 5 appreciation flip card strings."
+        },
+        "openWhenNotes": {
+          "type": "array",
+          "description": "Up to 4 Open When mood envelope objects."
+        },
+        "enableQuiz": {
+          "type": "boolean"
+        },
+        "quiz": {
+          "type": "array",
+          "description": "Up to 3 mini-quiz question objects."
+        },
+        "scratchLabel": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "scratchSecret": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "passcodeEnabled": {
+          "type": "boolean"
+        },
+        "passcode": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "passcodeHint": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "customSlug": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the gift was published."
+        }
+      },
+      "required": [
+        "slug",
+        "creatorId",
+        "tier",
+        "theme",
+        "occasion",
+        "recipientName",
+        "senderName",
+        "headline",
+        "openingLetter",
+        "specialDate",
+        "milestoneDateIso",
+        "milestoneLabel",
+        "songTitle",
+        "songArtist",
+        "songUrl",
+        "memories",
+        "reasons",
+        "openWhenNotes",
+        "enableQuiz",
+        "quiz",
+        "scratchLabel",
+        "scratchSecret",
+        "passcodeEnabled",
+        "passcode",
+        "passcodeHint",
+        "customSlug",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/creators/{creatorId}": {
+      "schema": {
+        "$ref": "#/entities/CreatorProfile"
+      },
+      "description": "Private creator profile holding PII (verified email), remaining publish credits, ₹99 unlimited status, and latest payment reference."
+    },
+    "/gifts/{slug}": {
+      "schema": {
+        "$ref": "#/entities/SurpriseGift"
+      },
+      "description": "Published surprise mini-sites keyed by unique URL slug. Publicly gettable by slug; listable and writable only by owning creatorId."
+    }
+  }
+}
